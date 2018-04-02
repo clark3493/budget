@@ -15,4 +15,4 @@ db.drop_tables_all()
 for tbl in baseline_tables():
     db.sql_cmd(tbl.create_cmd())
     
-db.show_tables()
+db.show_tables(with_data=True)
