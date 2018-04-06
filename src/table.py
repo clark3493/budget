@@ -9,8 +9,7 @@ class Constraint(object):
     
     # THIS WILL NEED TO BE MODIFIED, SOME CONSTRAINTS ARE DEFINED DIFFERENTLY
     # AT THE TABLE VS FIELD LEVEL
-    SOLO_CONSTRAINTS  = [ "FOREIGN KEY",
-                          "NOT NULL",
+    SOLO_CONSTRAINTS  = [ "NOT NULL",
                           "PRIMARY KEY",
                           "UNIQUE" ]
                           
@@ -21,27 +20,33 @@ class Constraint(object):
         self.type = constraint
         
         if constraint not in Constraint.SOLO_CONSTRAINTS and len(args) < 1:
-            raise ValueError("DEFAULT and CHECK constraints require an additional argument")
+            raise ValueError("DEFAULT, CHECK and FOREIGN KEY constraints require an additional argument")
         elif constraint not in Constraint.SOLO_CONSTRAINTS:
-            self.arg = str(args[0])
+            self.args = args
             
     def write(self):
         if self.type in Constraint.SOLO_CONSTRAINTS:
             return self.type
+        elif self.type == "CHECK":
+            return self.type + "(" + str(self.args[0]) + ")"
         elif self.type == "DEFAULT":
-            return self.type + " " + self.arg
+            return self.type + " " + str(self.args[0])
+        elif self.type == "FOREIGN KEY":
+            return self.type +"(" + str(self.args[0]) + ") REFERENCES " + str(self.args[1])
         else:
-            return self.type + "(" + self.arg + ")"
+            raise ValueError("Constraint type '{}' not recognized".format(self.type))
             
         
 
 class Field(object):
     
-    VALID_TYPES = [ "INTEGER",
-                    "TEXT",
-                    "BLOB",
+    VALID_TYPES = [ "BLOB",
+                    "DATE",
+                    "INTEGER",
+                    "NUMERIC",
                     "REAL",
-                    "NUMERIC" ]
+                    "TEXT",
+                    "TIMESTAMP" ]
 
     def __init__(self,name,data_type,constraints=None):
         
@@ -50,9 +55,11 @@ class Field(object):
             raise TypeError("name and data_type input to Field object must be a string")
             
         if data_type not in Field.VALID_TYPES:
+            # UPDATE THIS ERROR MESSAGE
             msg  = "'{}' is not a valid data type\n".format(data_type)
             msg += "            This Python implementation only supports entry of the 5 true sqlite3 data types\n"
             msg += "            Visit https://www.sqlite.org/datatype3.html for additional details\n"
+            msg += " THIS ERROR MESSAGE IS NO LONGER ACCURATE I NEED TO UPDATE IT\n"
             raise ValueError(msg)
             
         if constraints != None:
@@ -117,14 +124,24 @@ class Table(object):
             self.constraints = [constraints]
             
     def create_cmd(self,if_not_exists=True,without_rowid=False):
+        # CREATE TABLE name I[IF NOT EXISTS] (
         cmd = "CREATE TABLE "
         if if_not_exists:
             cmd += "IF NOT EXISTS " + self.name + " (\n"
+        # FIELDS
         for i,fld in enumerate(self.fields):
-            if i == len(self.fields)-1:
+            if i == len(self.fields)-1 and self.constraints == None:
                 cmd += "    " + fld.write() + "\n"
             else:
                 cmd += "    " + fld.write() + ",\n"
+        # TABLE CONSTRAINTS
+        if self.constraints != None:
+            for i,cstr in enumerate(self.constraints):
+                if i == len(self.constraints)-1:
+                    cmd += "    " + cstr.write() + "\n"
+                else:
+                    cmd += "    " + cstr.write() + ",\n"
+        # ) [WITHOUT_ROWID];        
         cmd += ")"
         if without_rowid:
             cmd += " WITHOUT_ROWID"    

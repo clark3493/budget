@@ -1,8 +1,9 @@
 import sys
-sys.path.append(r"C:\Projects\_budget")
+#sys.path.append(r"C:\Projects\_budget")
 
 import sqlite3
 from warnings import warn
+from datetime import date,datetime
 
 from config import Config
 
@@ -19,20 +20,37 @@ class Database(Config):
         
         # database attributes
         self.AUTO_DISCONNECT = True
+        self.tables = self.get_tables()
         
+        # database connections
         self._connection = None
         self._cursor = None
+        
+    def commit(self):
+        try:
+            self._connection.commit()
+        except:
+            if self._connection == None:
+                # ADD DB DEPENDENT ERROR REPORTING HERE
+                pass
+            else:
+                self.disconnect()
+                raise
+    
     
     def connect(self):
         self._connection = sqlite3.connect(self.DB_DIR + "\\" + self.DATABASE_URI + ".db")
         
     def disconnect(self):
+        if self._cursor != None:
+            self._cursor.close()
+            self._cursor = None
+        
         if self._connection == None:
             warn("No need to disconnect, no connection has been established.")
         else:
             self._connection.close()
             self._connection = None
-            self._cursor = None
             
     def drop_table(self,name,if_exists=True,override=False):
         
@@ -94,6 +112,10 @@ class Database(Config):
             
         return self._cursor
     
+    def get_tables(self):
+        # PLACEHOLDER
+        return None
+    
     def show_tables(self,with_data=False):
         try:
             cursor = self.get_cursor()
@@ -105,7 +127,9 @@ class Database(Config):
                     cursor.execute("SELECT * FROM " + tbl[0] + ";")
                     rows = cursor.fetchall()
                     for row in rows:
-                        print("    " + row)
+                        print("    " + str(row))
+            
+            print("")
             
         except KeyboardInterrupt:
             self.disconnect()
@@ -117,14 +141,20 @@ class Database(Config):
         if self.AUTO_DISCONNECT:
             self.disconnect()
             
-    def sql_cmd(self, command):
+    def sql_cmd(self, command, commit=False,disconnect='default'):
         try:
-            cursor = self.get_cursor()
-            cursor.execute(command)
+            self._cursor = self.get_cursor()
+            self._cursor.execute(command)
+            
+            if commit:
+                self.commit()
+                
         except:
             print(command)
             self.disconnect()
-            raise 
+            raise
             
-        if self.AUTO_DISCONNECT:
+        if disconnect=='true' or disconnect==True:
+            self.disconnect()
+        elif disconnect=='default' and self.AUTO_DISCONNECT:
             self.disconnect()
