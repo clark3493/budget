@@ -1,15 +1,13 @@
-import sys
-#sys.path.append(r"C:\Projects\_budget")
-
+import logging
 import sqlite3
-from warnings import warn
-from datetime import date,datetime
 
 from config import Config
 
+
 class Database(Config):
+
     def __init__(self, configuration):
-        if configuration.DATABASE_URI == None:
+        if configuration.DATABASE_URI is None:
             raise ValueError("The input configuration is not defined")
         
         # attributes inherited from the input configuration
@@ -20,74 +18,109 @@ class Database(Config):
         
         # database attributes
         self.AUTO_DISCONNECT = True
-        self.tables = self.get_tables()
+        self._tables = self.get_tables()
         
         # database connections
         self._connection = None
         self._cursor = None
+
+        # logging settings
+        self.logger = logging.getLogger(__name__)
+        logging.basicConfig(level=configuration.LOGLEVEL)
         
     def commit(self):
+        """
+        Commits (save) changes to the database that have occurred since connecting
+        or since last commit
+        """
         try:
             self._connection.commit()
-        except:
-            if self._connection == None:
-                # ADD DB DEPENDENT ERROR REPORTING HERE
-                pass
+        except Exception as e:
+            if self._connection is None:
+                self.logger.warning("Attempted to commit, but did not have a database connection")
             else:
-                self.disconnect()
-                raise
-    
-    
+                if self.DEBUG is True:
+                    self.disconnect()
+                    raise
+                else:
+                    self.logger.error("Failed to commit to database:\n".format(e))
+
     def connect(self):
+        """
+        Connects to the database defined by the configuration DB_DIR and DATABASE_URI
+        """
         self._connection = sqlite3.connect(self.DB_DIR + "\\" + self.DATABASE_URI + ".db")
         
     def disconnect(self):
-        if self._cursor != None:
+        """
+        Disconnects from the database if there is an active connection
+        """
+        if self._cursor is not None:
             self._cursor.close()
             self._cursor = None
         
-        if self._connection == None:
-            warn("No need to disconnect, no connection has been established.")
+        if self._connection is None:
+            self.logger.debug("Attempted to disconnect but no active connection was found")
         else:
             self._connection.close()
             self._connection = None
             
-    def drop_table(self,name,if_exists=True,override=False):
-        
-        if self.PROTECT:
+    def drop_table(self, name, if_exists=True, override=False):
+        """
+        Deletes a table from the database as defined by the configuration.
+
+        @param name: the name of the table to be dropped
+        @type name: string
+        @param if_exists: flag indicating whether to include IF_EXISTS in the
+                          SQL command
+        @type if_exists: boolean
+        @param override: flag to override the configuration protection if the
+                         configuration requests user confirmation before deleting
+                         data
+        @type override: boolean
+        """
+        if self.PROTECT and not override:
             msg  = "Deleting a table cannot be undone.\n"
             msg += "Are you sure you want to delete table '{}' from database\n"
             msg += "    " + self.DATABASE_DIR + "\\" + self.DATABASE_URI + ".db?\nY/N:  "
-            go = raw_input(msg)
+            go = input(msg.format(name))
             
             if go[0].lower() != "y":
-                # ADD MESSAGE OUTPUT DEPENDING ON CONFIG KEY FOR ECHOES
+                self.logger.info("User cancelled table drop for table '{}' in {}".format(
+                        name, self.DATABASE_DIR + "\\" + self.DATABASE_URI))
                 return
         
-        cmd  = "DROP TABLE "
+        cmd = "DROP TABLE "
         if if_exists:
             cmd += "IF EXISTS "
         cmd += name + ";"
         
         try:
             self.sql_cmd(cmd)
-        except:
-            self.disconnect()
-            raise
+        except Exception as e:
+            if self.DEBUG is True:
+                self.disconnect()
+                raise
+            else:
+                self.logger.error("Error attempting to delete table {} from {}:\n{}".format(
+                    name,self.DATABASE_DIR + "\\" + self.DATABASE_URI,e))
             
-        if AUTO_DISONNECT:
+        if self.AUTO_DISCONNECT:
             self.disconnect()
             
     def drop_tables_all(self):
-    
+        """
+        Deletes all tables from the database. Cannot be undone
+        """
         if self.PROTECT:    
-            msg  = "Deleting a table cannot be undone.\n"
+            msg = "Deleting a table cannot be undone.\n"
             msg += "Are you sure you want to delete table ALL TABLES from database\n"
             msg += "    " + self.DATABASE_DIR + "\\" + self.DATABASE_URI + ".db?\nY/N:  "
-            go = raw_input(msg)
+            go = input(msg)
             
             if go[0].lower() != "y":
-                # ADD MESSAGE OUTPUT DEPENDING ON CONFIG KEY FOR ECHOES
+                self.logger.info("User cancelled table drop for all tables in {}".format(
+                    self.DATABASE_DIR + "\\" + self.DATABASE_URI))
                 return
         
         cursor = self.get_cursor()
@@ -98,15 +131,44 @@ class Database(Config):
             
         if self.AUTO_DISCONNECT:
             self.disconnect()
+
+    def get(self, fields, table, where=None, disconnect='default'):
+        cmd = "SELECT " + fields + " FROM " + table
+        if where is not None:
+            cmd += " WHERE " + where
+        self.sql_cmd(cmd, disconnect=False)
+        val = self._cursor.fetchall()
+
+        if str(disconnect).lower() == 'true':
+            self.disconnect()
+        elif disconnect == 'default' and self.AUTO_DISCONNECT:
+            self.disconnect()
+
+        return val
+
             
     def get_connection(self):
-        if self._connection == None:
+        """
+        Returns an sqlite3 connection object for the database defined by the
+        configuration
+        
+        @return: database connection
+        @rtype: connection
+        """
+        if self._connection is None:
             self.connect()
         
         return self._connection
         
     def get_cursor(self):
-        if self._cursor == None:
+        """
+        Returns a cursor object for the current connection. Build a connection
+        if there is none.
+        
+        @return: cursor to database connection
+        @rtype: cursor
+        """
+        if self._cursor is None:
             connection = self.get_connection()
             self._cursor = connection.cursor()
             
@@ -116,7 +178,14 @@ class Database(Config):
         # PLACEHOLDER
         return None
     
-    def show_tables(self,with_data=False):
+    def show_tables(self, with_data=False):
+        """
+        Prints the name of all tables in the database, along with other
+        optional parameters
+        
+        @param with_data: flag to print the data for each table
+        @type with_data: boolean
+        """
         try:
             cursor = self.get_cursor()
             cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
@@ -142,6 +211,17 @@ class Database(Config):
             self.disconnect()
             
     def sql_cmd(self, command, commit=False,disconnect='default'):
+        """
+        Executes a general SQL command in the database
+        
+        @param command: the SQL command
+        @type command:  string
+        @param commit:  flag to commit changes before returning/disconnecting
+        @type commit:   boolean
+        @param disconnect:      flag to override the database AUTO_DISCONNECT setting
+        @options disconnect:    'default','true','false'
+        @type disconnect:       string
+        """
         try:
             self._cursor = self.get_cursor()
             self._cursor.execute(command)
@@ -149,12 +229,15 @@ class Database(Config):
             if commit:
                 self.commit()
                 
-        except:
-            print(command)
-            self.disconnect()
-            raise
+        except Exception:
+            if self.DEBUG is True:
+                self.disconnect()
+                self.logger.error(" Error during SQL command:\n{}".format(command))
+                raise
+            else:
+                self.logger.error(" Error during SQL command:\n{}".format(command))
             
-        if disconnect=='true' or disconnect==True:
+        if disconnect == 'true' or disconnect is True:
             self.disconnect()
-        elif disconnect=='default' and self.AUTO_DISCONNECT:
+        elif disconnect == 'default' and self.AUTO_DISCONNECT:
             self.disconnect()

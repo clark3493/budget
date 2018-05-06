@@ -2,13 +2,13 @@ import sys
 sys.path.append('..')
 sys.path.append(r'C:\Projects\_budget')
 
-from config import DevelopmentConfig
+from config import TestConfig
 
 from src.database_budget import BudgetDatabase
 from src.table import *
 from src.baseline import *
 
-db = BudgetDatabase(DevelopmentConfig)
+db = BudgetDatabase(TestConfig)
 
 db.drop_tables_all()
 
@@ -30,3 +30,4 @@ db.show_tables(with_data=True)
 db.add_expense(1,"TestAccount")
 
 db.show_tables(with_data=True)
+db.logger.info(" Successfully finished test")

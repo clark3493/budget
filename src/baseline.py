@@ -1,4 +1,5 @@
-from src.table import Constraint, Field, Table
+import pathmagic
+from table import Field, FieldConstraint, Table, TableConstraint
     
 # EXPENSE CATEGORY TABLE
 table_expense_category = Table(
@@ -14,8 +15,10 @@ table_expense_subcategory = Table(
     "ExpenseSubCategory",
     fields = [ Field("ID","INTEGER",constraints=["PRIMARY KEY","NOT NULL"]),
                Field("Name","TEXT",constraints="NOT NULL"),
+               Field("ParentCategory","INTEGER",constraints="NOT NULL"),
                Field("Created","TIMESTAMP",constraints="NOT NULL")
-               ]
+               ],
+    constraints = TableConstraint("FOREIGN KEY", "ParentCategory", "ExpenseCategory(ID)")
     )
     
 # PAYMENT TYPE TABLE
@@ -55,28 +58,28 @@ table_expense_recipient_alias = Table(
                Field("AliasType","TEXT"),
                Field("Created","TIMESTAMP",constraints="NOT NULL")
                ],
-    constraints = [ Constraint("FOREIGN KEY","Recipient","ExpenseRecipient(ID)") ]
+    constraints = [ TableConstraint("FOREIGN KEY","Recipient","ExpenseRecipient(ID)") ]
     )
 
 # EXPENSE TABLE
 table_expense = Table(
     "Expense",
-    fields = [ Field("ID","INTEGER",constraints=["PRIMARY KEY","NOT NULL"]),
-               Field("Value","REAL",constraints="NOT NULL"),
-               Field("Account","TEXT",constraints="NOT NULL"),
-               Field("Date","DATE"),
-               Field("Category","TEXT"),
-               Field("SubCategory","TEXT"),
-               Field("Flag","TEXT"),
-               Field("PaymentType","TEXT"),
-               Field("PaidTo","TEXT"),
-               Field("Created","TIMESTAMP",constraints="NOT NULL")
+    fields = [ Field("ID", "INTEGER",constraints=["PRIMARY KEY", "NOT NULL"]),
+               Field("Value", "REAL",constraints="NOT NULL"),
+               Field("Account", "INTEGER",constraints="NOT NULL"),
+               Field("Date", "DATE"),
+               Field("Category", "TEXT"),
+               Field("SubCategory", "TEXT"),
+               Field("Flag", "TEXT"),
+               Field("PaymentType", "TEXT"),
+               Field("PaidTo", "TEXT"),
+               Field("Created", "TIMESTAMP", constraints="NOT NULL")
                ],
-    constraints = [ Constraint("FOREIGN KEY","Account","Account(ID)"),
-                    Constraint("FOREIGN KEY","Category","ExpenseCategory(ID)"),
-                    Constraint("FOREIGN KEY","SubCategory","ExpenseSubCategory(ID)"),
-                    Constraint("FOREIGN KEY","PaymentType","PaymentType(ID)"),
-                    Constraint("FOREIGN KEY","PaidTo","ExpenseRecipient(ID)")
+    constraints = [ TableConstraint("FOREIGN KEY", "Account", "Account(ID)"),
+                    TableConstraint("FOREIGN KEY", "Category", "ExpenseCategory(ID)"),
+                    TableConstraint("FOREIGN KEY", "SubCategory", "ExpenseSubCategory(ID)"),
+                    TableConstraint("FOREIGN KEY", "PaymentType", "PaymentType(ID)"),
+                    TableConstraint("FOREIGN KEY", "PaidTo", "ExpenseRecipient(ID)")
                     ]
     )
     
@@ -119,10 +122,10 @@ table_income = Table(
                Field("Source","TEXT"),
                Field("Created","TIMESTAMP",constraints="NOT NULL")
                ],
-    constraints = [ Constraint("FOREIGN KEY","Account","Account(ID)"),
-                    Constraint("FOREIGN KEY","Category","IncomeCategory(ID)"),
-                    Constraint("FOREIGN KEY","SubCategory","IncomeSubCategory(ID)"),
-                    Constraint("FOREIGN KEY","Source","IncomeSource(ID)")
+    constraints = [ TableConstraint("FOREIGN KEY","Account","Account(ID)"),
+                    TableConstraint("FOREIGN KEY","Category","IncomeCategory(ID)"),
+                    TableConstraint("FOREIGN KEY","SubCategory","IncomeSubCategory(ID)"),
+                    TableConstraint("FOREIGN KEY","Source","IncomeSource(ID)")
                     ]
     )
     
