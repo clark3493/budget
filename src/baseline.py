@@ -53,7 +53,7 @@ table_expense_recipient = Table(
 table_expense_recipient_alias = Table(
     "ExpenseRecipientAlias",
     fields = [ Field("ID","INTEGER",constraints=["PRIMARY KEY","NOT NULL"]),
-               Field("Recipient","TEXT",constraints="NOT NULL"),
+               Field("Recipient","INTEGER",constraints="NOT NULL"),
                Field("Alias","TEXT",constraints="NOT NULL"),
                Field("AliasType","TEXT"),
                Field("Created","TIMESTAMP",constraints="NOT NULL")

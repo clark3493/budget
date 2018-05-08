@@ -27,7 +27,7 @@ class Database(Config):
         # logging settings
         self.logger = logging.getLogger(__name__)
         logging.basicConfig(level=configuration.LOGLEVEL)
-        
+
     def commit(self):
         """
         Commits (save) changes to the database that have occurred since connecting
@@ -138,15 +138,17 @@ class Database(Config):
             cmd += " WHERE " + where
         self.sql_cmd(cmd, disconnect=False)
         val = self._cursor.fetchall()
-
-        if str(disconnect).lower() == 'true':
-            self.disconnect()
-        elif disconnect == 'default' and self.AUTO_DISCONNECT:
-            self.disconnect()
+        self.handle_connection(disconnect)
 
         return val
 
-            
+    def getone(self, fields, table, where=None, disconnect='default'):
+        val = self.get(fields, table, where=where, disconnect=disconnect)
+        if val:
+            return val[0][0]
+        else:
+            return None
+
     def get_connection(self):
         """
         Returns an sqlite3 connection object for the database defined by the
@@ -173,11 +175,84 @@ class Database(Config):
             self._cursor = connection.cursor()
             
         return self._cursor
-    
+
+    def get_id(self, table, field, value):
+        """
+        Returns the first ID for the given value of the given field in
+        the indicated table, if it exists.
+        If the given value is an integer, the function
+        simply checks if the ID exists and returns it.
+        Returns None if the corresponding entry cannot be found
+
+        :param table: the name of the table to search
+        :type table: string
+        :param field: Name of the field to search if value is a string
+        :type field: string
+        :param value: the value in the field to search or an id number
+        :type value: string or integer
+        :return: ID number
+        :rtype: int
+        """
+        if type(value) is int:
+            val = self.get('ID', table, 'ID={}'.format(value))
+        else:
+            strvalue = self.string_string(value)
+            val = self.get('ID', table, '{}={}'.format(field, strvalue))
+
+        if val:
+            id_num = val[0][0]
+        else:
+            id_num = None
+
+        return id_num
+
     def get_tables(self):
         # PLACEHOLDER
         return None
-    
+
+    def handle_connection(self, disconnect):
+        """
+        Determines if the database connection should be closed
+        based on the input parameter 'disconnect'
+        True or False provide a specific instructions
+        'default' disconnects if AUTO_DISCONNECT is True
+
+        @param disconnect: disconnection flag
+        @type disconnect: boolean or string
+        """
+        if str(disconnect).lower() == 'true':
+            self.disconnect()
+        elif disconnect == 'default' and self.AUTO_DISCONNECT:
+            self.disconnect()
+
+    def insert(self, table, cols, vals):
+        """
+        Creates a line item within the indicated table with the
+        given values for the corresponding indicated columns
+
+        @param table: table name
+        @type table: string
+        @param cols: column names
+        @type cols: tuple(string)
+        @param vals: data values
+        @type vals: tuple(various)
+        """
+        try:
+            valstr = "?," * len(cols)
+            valstr = valstr[:-1]
+            cursor = self.get_cursor()
+            cmd = "INSERT INTO {} {} VALUES ({})".format(
+                table, cols, valstr)
+            cursor.execute(cmd, vals)
+            self.commit()
+        except sqlite3.OperationalError:
+            self.disconnect()
+            self.logger.error("Command='{}'\nValues={}".format(cmd, vals))
+            raise
+        except Exception:
+            self.disconnect()
+            raise
+
     def show_tables(self, with_data=False):
         """
         Prints the name of all tables in the database, along with other
@@ -241,3 +316,20 @@ class Database(Config):
             self.disconnect()
         elif disconnect == 'default' and self.AUTO_DISCONNECT:
             self.disconnect()
+
+    @staticmethod
+    def string_string(string):
+        """
+        Appends apostrophes to the beginning and end of the given
+        string if they do not already exists
+
+        :param string: the string to be modified
+        :type string: str
+        :return: the modified string
+        :rtype: str
+        """
+        if string[0] != "'":
+            string = "'" + string
+        if string[-1] != "'":
+            string = string + "'"
+        return string

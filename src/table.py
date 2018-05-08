@@ -60,7 +60,7 @@ class FieldConstraint(object):
         if constraint.upper() not in FieldConstraint.VALID_CONSTRAINTS:
             raise ValueError("{} is not a valid field constraint type".format(constraint))
 
-        if constraint.upper() not in FieldConstraint.VALID_SOLO_CONSTRAINTS and args is None:
+        if constraint.upper() not in FieldConstraint.VALID_SOLO_CONSTRAINTS and not args:
             raise ValueError("CHECK, COLLATE, DEFAULT and FOREIGN KEY constraints require an additional argument")
 
         self.type = constraint.upper()
@@ -160,8 +160,8 @@ class TableConstraint(object):
         if constraint.upper() not in TableConstraint.VALID_CONSTRAINTS:
             raise ValueError("{} is not a valid field constraint type".format(constraint))
 
-        if args is None:
-            raise ValueError("Table level constraints require an additional arguments")
+        if not args:
+            raise ValueError("Table level constraints require additional arguments")
 
         self.type = constraint.upper()
         if type(args) is tuple:

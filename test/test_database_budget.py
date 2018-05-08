@@ -1,7 +1,7 @@
 import pathmagic  # noqa
 import os
 import unittest
-from baseline import *
+from baseline import baseline_tables
 from config import TestConfig
 from database_budget import BudgetDatabase
 
@@ -48,11 +48,21 @@ class BudgetDatabaseTestCase(unittest.TestCase):
         expected = 75.
         self.assertEqual(expected, actual[0][0])
 
-    def test_add_expense_to_new_account_raises_value_error(self):
-        """
-        DESCRIPTION
-        """
-        self.assertRaises(ValueError, self.db.add_expense, "TestAccount", 1)
+    def test_add_expense_recipient(self):
+        self.db.add_expense_recipient("TestRecipient")
+        self.db.sql_cmd("SELECT * FROM ExpenseRecipient WHERE Name='TestRecipient'")
+        actual = self.db._cursor.fetchall()[0][:-1]
+        expected = (1, 'TestRecipient')
+        self.assertEqual(expected, actual)
+
+    def test_add_expense_recipient_alias(self):
+        self.db.add_expense_recipient("TestRecipient")
+        self.db.add_expense_recipient("TestRecipient2")
+        self.db.add_expense_recipient_alias("TestRecipient2","Alias")
+        self.db.sql_cmd("SELECT * FROM ExpenseRecipientAlias")
+        actual = self.db._cursor.fetchall()[0][:-1]
+        expected = (1, 2, "Alias", "CONTAINS")
+        self.assertEqual(expected, actual)
 
     def test_add_expense_subcategory(self):
         self.db.add_expense_category("Food")
@@ -63,6 +73,20 @@ class BudgetDatabaseTestCase(unittest.TestCase):
 
     def test_add_expense_subcategory_without_parent_raises_value_error(self):
         self.assertRaises(ValueError, self.db.add_expense_subcategory, "Pizza", "Food")
+
+    def test_add_expense_to_new_account_raises_value_error(self):
+        self.assertRaises(ValueError, self.db.add_expense, "TestAccount", 1)
+
+    def test_add_invalid_alias_type_raises_value_error(self):
+        self.assertRaises(ValueError, self.db.add_expense_recipient_alias,
+                          "Rec", "Alias", "NOT A TYPE")
+
+    def test_add_payment_type(self):
+        self.db.add_payment_type("TestType")
+        self.db.sql_cmd("SELECT * FROM PaymentType WHERE Name='TestType'")
+        actual = self.db._cursor.fetchall()[0][:-1]
+        expected = (1, "TestType")
+        self.assertEqual(expected, actual)
 
     def tearDown(self):
         """

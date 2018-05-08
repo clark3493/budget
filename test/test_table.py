@@ -16,6 +16,9 @@ class TableTestCase(unittest.TestCase):
         f = Field("TestField", "BLOB", "NOT NULL")
         self.assertEqual(type(f.constraints), list)
 
+    def test_field_with_invalid_dtype_raises_value_error(self):
+        self.assertRaises(ValueError, Field, "Name", "NOT A TYPE")
+
     def test_invalid_field_constraint_list_raises_value_error(self):
         self.assertRaises(ValueError, Field, "TestField", "TEXT",
                           constraints=['PRIMARY KEY', 'NOT A CONSTRAINT'])
