@@ -130,7 +130,30 @@ table_income = Table(
                     TableConstraint("FOREIGN KEY","Source","IncomeSource(ID)")
                     ]
     )
-    
+
+# TRANSACTION TABLE
+table_transaction = Table(
+    'Transaction',
+    fields=[Field('ID', 'INTEGER', constraints=['PRIMARY KEY', 'NOT NULL']),
+            Field('FromAccount', 'INTEGER'),
+            Field('ToAccount', 'INTEGER'),
+            Field('Value', 'REAL', 'NOT NULL'),
+            Field('Date', 'DATE'),
+            Field('TransactionType', 'TEXT'),
+            Field('Description', 'TEXT'),
+            Field('Category', 'INTEGER'),
+            Field('SubCategory', 'INTEGER'),
+            Field('PaymentType', 'TEXT'),
+            Field('Entered', 'TIMESTAMP', 'NOT NULL'),
+            Field('Modified', 'TIMESTAMP')],
+    constraints=[TableConstraint('FOREIGN KEY', 'FromAccount', 'Account(ID)'),
+                 TableConstraint('FOREIGN KEY', 'ToAccount', 'Account(ID)'),
+                 TableConstraint('FOREIGN KEY', 'Category', 'Category(ID)'),
+                 TableConstraint('FOREIGN KEY', 'SubCategory', 'SubCategory(ID)'),
+                 TableConstraint('CHECK', 'asd')]
+)
+
+
 def baseline_tables():
     return [ table_expense_category,
              table_expense_subcategory,

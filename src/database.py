@@ -50,6 +50,8 @@ class Database(Config):
         Connects to the database defined by the configuration DB_DIR and DATABASE_URI
         """
         self._connection = sqlite3.connect(self.DB_DIR + "\\" + self.DATABASE_URI + ".db")
+        for cmd in self.STARTUP:
+            self.sql_cmd(cmd, disconnect=False)
         
     def disconnect(self):
         """
