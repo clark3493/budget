@@ -68,11 +68,11 @@ table_expense = Table(
                Field("Value", "REAL",constraints="NOT NULL"),
                Field("Account", "INTEGER",constraints="NOT NULL"),
                Field("Date", "DATE"),
-               Field("Category", "TEXT"),
-               Field("SubCategory", "TEXT"),
-               Field("Flag", "TEXT"),
-               Field("PaymentType", "TEXT"),
-               Field("PaidTo", "TEXT"),
+               Field("Category", "INTEGER"),
+               Field("SubCategory", "INTEGER"),
+               Field("Flag", "INTEGER"),
+               Field("PaymentType", "INTEGER"),
+               Field("PaidTo", "INTEGER"),
                Field("Created", "TIMESTAMP", constraints="NOT NULL")
                ],
     constraints = [ TableConstraint("FOREIGN KEY", "Account", "Account(ID)"),
@@ -97,8 +97,10 @@ table_income_subcategory = Table(
     "IncomeSubCategory",
     fields = [ Field("ID","INTEGER",constraints=["PRIMARY KEY","NOT NULL"]),
                Field("Name","TEXT",constraints="NOT NULL"),
+               Field("ParentCategory","INTEGER",constraints="NOT NULL"),
                Field("Created","TIMESTAMP",constraints="NOT NULL")
-               ]
+               ],
+    constraints=TableConstraint("FOREIGN KEY", "ParentCategory", "IncomeCategory(ID)")
     )
     
 # INCOME SOURCE
@@ -115,11 +117,11 @@ table_income = Table(
     "Income",
     fields = [ Field("ID","INTEGER",constraints=["PRIMARY KEY","NOT NULL"]),
                Field("Value","REAL",constraints="NOT NULL"),
-               Field("Account","TEXT",constraints="NOT NULL"),
+               Field("Account","INTEGER",constraints="NOT NULL"),
                Field("Date","DATE"),
-               Field("Category","TEXT"),
-               Field("SubCategory","TEXT"),
-               Field("Source","TEXT"),
+               Field("Category","INTEGER"),
+               Field("SubCategory","INTEGER"),
+               Field("Source","INTEGER"),
                Field("Created","TIMESTAMP",constraints="NOT NULL")
                ],
     constraints = [ TableConstraint("FOREIGN KEY","Account","Account(ID)"),

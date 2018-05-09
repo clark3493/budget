@@ -194,17 +194,12 @@ class Database(Config):
         :rtype: int
         """
         if type(value) is int:
-            val = self.get('ID', table, 'ID={}'.format(value))
+            val = self.getone('ID', table, 'ID={}'.format(value))
         else:
             strvalue = self.string_string(value)
-            val = self.get('ID', table, '{}={}'.format(field, strvalue))
+            val = self.getone('ID', table, '{}={}'.format(field, strvalue))
 
-        if val:
-            id_num = val[0][0]
-        else:
-            id_num = None
-
-        return id_num
+        return val
 
     def get_tables(self):
         # PLACEHOLDER

@@ -38,7 +38,7 @@ class BudgetDatabase(Database):
                     disconnect='default'):
         
         try:
-            value = round(float(value),2)
+            value = round(float(value), 2)
             account_id = self.get_account_id(account)
             if account_id is None:
                 raise ValueError("Account '{}' could not be found in the database".format(account))
@@ -173,6 +173,114 @@ class BudgetDatabase(Database):
                 self.logger.error("Error attempting to add {} category in {}:\n{}".format(
                     name, self.DATABASE_DIR + "\\" + self.DATABASE_URI, e))
 
+    def add_income(self,
+                   value,
+                   account,
+                   income_date=None,
+                   category=None,
+                   subcategory=None,
+                   source=None,
+                   disconnect='default'):
+        try:
+            value = round(float(value),2)
+            account_id = self.get_account_id(account)
+            if account_id is None:
+                raise ValueError("Account '{}' could not be found in the database".format(account))
+
+            columns = ('ID', 'Value', 'Account')
+            values = (None, value, account_id)
+
+            # SHOULD ADD BETTER INPUT ERROR HANDLING HERE
+            if income_date is not None:
+                columns += ('Date',)
+                values  += (income_date,)
+
+            if category is not None:
+                columns += ('Category',)
+                values  += (category,)
+
+            if subcategory is not None:
+                columns += ('SubCategory',)
+                values  += (subcategory,)
+
+            if source is not None:
+                columns += ('Source',)
+                values  += (source,)
+
+            columns += ('Created',)
+            values  += (datetime.now(),)
+
+            self.insert('Income', columns, values)
+            self.update_account_balance(account, value, disconnect=False)
+            self.handle_connection(disconnect)
+
+        except Exception as e:
+            if self.DEBUG is True:
+                self.disconnect()
+                raise
+            else:
+                self.logger.error("Error attempting to add {} income to {} in {}:\n{}".format(
+                    value, account, self.DATABASE_DIR + "\\" + self.DATABASE_URI, e))
+
+    def add_income_category(self, name, disconnect='default'):
+        try:
+            columns = ('ID', 'Name', 'Created')
+            values= (None, name, datetime.now())
+
+            self.insert('IncomeCategory', columns, values)
+            self.handle_connection(disconnect)
+
+        except Exception as e:
+            if self.DEBUG is True:
+                self.disconnect()
+                raise
+            else:
+                self.logger.error("Error attempting to add {} IncomeCategory in {}:\n{}".format(
+                    name, self.DATABASE_DIR + "\\" + self.DATABASE_URI, e))
+
+    def add_income_source(self, name, disconnect='default'):
+        try:
+            columns = ('ID', 'Name', 'Created')
+            values = (None, name, datetime.now())
+
+            self.insert('IncomeSource', columns, values)
+            self.handle_connection(disconnect)
+
+        except Exception as e:
+            if self.DEBUG is True:
+                self.disconnect()
+                raise
+            else:
+                self.logger.error("Error attempting to add {} IncomeSource in {}:\n{}".format(
+                    name, self.DATABASE_DIR + "\\" + self.DATABASE_URI, e))
+
+    def add_income_subcategory(self,
+                               name,
+                               parent_category,
+                               disconnect='default'):
+        try:
+            parent_id = self.get_id('IncomeCategory',
+                                    'Name',
+                                    parent_category)
+            if not parent_id:
+                msg = "Error attempting to add income sub-category.\n"
+                msg += "Parent category {} could not be found".format(parent_category)
+                raise ValueError(msg)
+
+            columns = ('ID', 'Name', 'ParentCategory', 'Created')
+            values = (None, name, parent_id, datetime.now())
+
+            self.insert('IncomeSubCategory', columns, values)
+            self.handle_connection(disconnect)
+
+        except Exception as e:
+            if self.DEBUG is True:
+                self.disconnect()
+                raise
+            else:
+                self.logger.error("Error attempting to add {} subcategory in {}:\n{}".format(
+                    name, self.DATABASE_DIR + "\\" + self.DATABASE_URI, e))
+
     def add_payment_type(self, name, disconnect='default'):
         try:
             columns = ('ID', 'Name', 'Created')
@@ -190,8 +298,7 @@ class BudgetDatabase(Database):
                     name, self.DATABASE_DIR + "\\" + self.DATABASE_URI, e))
 
     def get_account_id(self, account, disconnect=False):
-        self.sql_cmd("SELECT ID FROM Account WHERE Name = '" + account + "'",disconnect=False)
-        act_id = self._cursor.fetchone()[0]
+        act_id = self.get_id('Account', 'Name', account)
         self.handle_connection(disconnect)
 
         return act_id

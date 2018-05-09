@@ -31,7 +31,7 @@ class BudgetDatabaseTestCase(unittest.TestCase):
         self.db.add_expense(-25, "TestAccount")
         self.db.sql_cmd("SELECT * FROM Expense WHERE Account=1")
         actual = self.db._cursor.fetchall()
-        expected = (1, -25, 1, None, None, None, None, None, None)
+        expected = (1, -25., 1, None, None, None, None, None, None)
         self.assertEqual(expected, actual[0][:-1])
 
     def test_add_expense_category(self):
@@ -76,6 +76,47 @@ class BudgetDatabaseTestCase(unittest.TestCase):
 
     def test_add_expense_to_new_account_raises_value_error(self):
         self.assertRaises(ValueError, self.db.add_expense, "TestAccount", 1)
+
+    def test_add_income(self):
+        self.db.add_account("TestAccount", 100.)
+        self.db.add_income(25, "TestAccount")
+        self.db.sql_cmd("SELECT * FROM Income WHERE Account=1")
+        actual = self.db._cursor.fetchall()
+        expected = (1, 25., 1, None, None, None, None)
+        self.assertEqual(expected, actual[0][:-1])
+
+    def test_add_income_category(self):
+        self.db.add_income_category("Salary")
+        actual = self.db.get("*", "IncomeCategory")[0][:-1]
+        expected = (1, "Salary")
+        self.assertEqual(expected, actual)
+
+    def test_add_income_increments_account(self):
+        self.db.add_account("TestAccount", 100.)
+        self.db.add_expense(25, "TestAccount")
+        self.db.sql_cmd("SELECT Balance FROM Account WHERE Name='TestAccount'")
+        actual = self.db._cursor.fetchall()
+        expected = 125.
+        self.assertEqual(expected, actual[0][0])
+
+    def test_add_income_source(self):
+        self.db.add_income_source("Source")
+        actual = self.db.get("*", "IncomeSource")[0][:-1]
+        expected = (1, "Source")
+        self.assertEqual(expected, actual)
+
+    def test_add_income_subcategory(self):
+        self.db.add_income_category("Salary")
+        self.db.add_income_subcategory("Job1", "Salary")
+        actual = self.db.get("*", "IncomeSubCategory")[0][:-1]
+        expected = (1, "Job1", 1)
+        self.assertEqual(expected, actual)
+
+    def test_add_income_subcategory_without_parent_raises_value_error(self):
+        self.assertRaises(ValueError, self.db.add_income_subcategory, "Job1", "Salary")
+
+    def test_add_income_to_new_account_raises_value_error(self):
+        self.assertRaises(ValueError, self.db.add_income, "TestAccount", 1)
 
     def test_add_invalid_alias_type_raises_value_error(self):
         self.assertRaises(ValueError, self.db.add_expense_recipient_alias,
