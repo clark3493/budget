@@ -150,7 +150,7 @@ table_transaction = Table(
                  TableConstraint('FOREIGN KEY', 'ToAccount', 'Account(ID)'),
                  TableConstraint('FOREIGN KEY', 'Category', 'Category(ID)'),
                  TableConstraint('FOREIGN KEY', 'SubCategory', 'SubCategory(ID)'),
-                 TableConstraint('CHECK', 'asd')]
+                 TableConstraint('CHECK', 'NOT(FromAccount IS NULL AND ToAccount IS NULL)')]
 )
 
 

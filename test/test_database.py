@@ -1,5 +1,6 @@
 import pathmagic  # noqa
 import os
+import sqlite3
 from config import TestConfig
 from database import Database
 
@@ -15,6 +16,20 @@ class DatabaseTestCase(unittest.TestCase):
         Setup a temporary database for testing
         """
         self.db = Database(TestConfig)
+
+    def test_add_nonexistent_foreign_key_raises_integrity_error(self):
+        cursor = self.db.get_cursor()
+        cursor.execute("""CREATE TABLE table1
+                          (ID INTEGER PRIMARY KEY NOT NULL,
+                           Name TEXT);""")
+        cursor.execute("""INSERT INTO table1(ID, Name) VALUES (NULL, 'name1')""")
+
+        cursor.execute("""CREATE TABLE table2
+                          (ID INTEGER PRIMARY KEY NOT NULL,
+                          Ref INTEGER,
+                          FOREIGN KEY(Ref) REFERENCES table1(ID));""")
+        cmd = """INSERT INTO table2(ID, Ref) VALUES (1, 99)"""
+        self.assertRaises(sqlite3.IntegrityError, cursor.execute, cmd)
 
     def test_connect(self):
         """

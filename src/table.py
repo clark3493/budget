@@ -170,8 +170,10 @@ class TableConstraint(object):
             self.args = (args,)
 
     def write(self):
-        if self.type in ['CHECK', 'DEFAULT', 'NOT NULL', 'PRIMARY KEY', 'UNIQUE']:
+        if self.type in ['DEFAULT', 'NOT NULL', 'PRIMARY KEY', 'UNIQUE']:
             cmd = self.type + " " + str(self.args[0])
+        elif self.type == 'CHECK':
+            cmd = self.type + '(' + str(self.args[0]) + ')'
         elif self.type == 'FOREIGN KEY':
             cmd = self.type + "(" + str(self.args[0]) + ") REFERENCES " + str(self.args[1])
         else:
