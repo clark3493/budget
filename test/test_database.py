@@ -92,6 +92,13 @@ class DatabaseTestCase(unittest.TestCase):
         id_num = self.db.get_id("ALBUMS", "artist", "'Red'")
         self.assertEqual(3, id_num)
 
+    def test_get_last_entry(self):
+        populate_sample_database(self.db)
+        actual = self.db.get_last_entry('albums')
+        expected = (5, 'The Good Life', 'Trip Lee', '4/10/2012',
+                    'Reach Records', 'CD')
+        self.assertEqual(expected, actual)
+
     def test_insert(self):
         """
         Verify that the insert function works

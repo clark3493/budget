@@ -125,11 +125,12 @@ class Table(object):
         cmd += self.name + "(\n"
 
         # FIELDS
-        for i, fld in enumerate(self.fields):
-            if i == len(self.fields)-1 and self.constraints is None:
-                cmd += "    " + fld.write() + "\n"
-            else:
-                cmd += "    " + fld.write() + ",\n"
+        if self.fields is not None:
+            for i, fld in enumerate(self.fields):
+                if i == len(self.fields)-1 and self.constraints is None:
+                    cmd += "    " + fld.write() + "\n"
+                else:
+                    cmd += "    " + fld.write() + ",\n"
 
         # TABLE CONSTRAINTS
         if self.constraints is not None:

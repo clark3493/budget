@@ -18,7 +18,6 @@ class Database(Config):
         
         # database attributes
         self.AUTO_DISCONNECT = True
-        self._tables = self.get_tables()
         
         # database connections
         self._connection = None
@@ -203,9 +202,13 @@ class Database(Config):
 
         return val
 
-    def get_tables(self):
-        # PLACEHOLDER
-        return None
+    def get_last_entry(self, table, disconnect='default'):
+        data = self.get('*', table, where='ID=(SELECT MAX(ID) FROM {})'.format(table))
+        if data:
+            entry = data[0]
+        else:
+            entry = None
+        return entry
 
     def handle_connection(self, disconnect):
         """
@@ -244,7 +247,7 @@ class Database(Config):
             self.commit()
         except sqlite3.OperationalError:
             self.disconnect()
-            self.logger.error("Command='{}'\nValues={}".format(cmd, vals))
+            self.logger.error("\nCommand='{}'\nValues={}".format(cmd, vals))
             raise
         except Exception:
             self.disconnect()
@@ -300,6 +303,8 @@ class Database(Config):
             
             if commit:
                 self.commit()
+
+            self.handle_connection(disconnect)
                 
         except Exception:
             if self.DEBUG is True:
@@ -308,11 +313,6 @@ class Database(Config):
                 raise
             else:
                 self.logger.error(" Error during SQL command:\n{}".format(command))
-            
-        if disconnect == 'true' or disconnect is True:
-            self.disconnect()
-        elif disconnect == 'default' and self.AUTO_DISCONNECT:
-            self.disconnect()
 
     @staticmethod
     def string_string(string):
