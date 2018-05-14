@@ -54,6 +54,30 @@ class BudgetDatabase(Database):
                 self.logger.error("Error attempting to link attribute '{}' to account '{}' in {}:\n{}".format(
                     account, attribute, self.DATABASE_DIR + "\\" + self.DATABASE_URI, e))
 
+    def add_alias(self,
+                  account,
+                  string,
+                  alias_type,
+                  disconnect='default'):
+        try:
+            account_id = self.get_id('Account', 'Name', account)
+            if account_id is None:
+                raise ValueError("Could not find account '{}' in database".format(account))
+
+            columns = ('ID', 'Account', 'String', 'Type', 'Created')
+            values  = (None, account_id, string, alias_type, datetime.now())
+
+            self.insert('Alias', columns, values)
+            self.handle_connection(disconnect)
+
+        except Exception as e:
+            if self.DEBUG is True:
+                self.disconnect()
+                raise
+            else:
+                self.logger.error("Error attempting to add alias '{}' for '{}' in {}:\n{}".format(
+                    string, account, self.DATABASE_DIR + "\\" + self.DATABASE_URI, e))
+
     def add_attribute(self,
                       attribute_name,
                       disconnect='default'):

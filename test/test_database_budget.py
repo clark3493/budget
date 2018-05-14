@@ -43,6 +43,14 @@ class BudgetDatabaseTestCase(unittest.TestCase):
         expected = (2, 1)
         self.assertEqual(expected, actual)
 
+    def test_add_alias(self):
+        self.db.add_account("TestAccount", "Personal", 0.)
+        self.db.add_account("TestAccount2", "Personal", 0.)
+        self.db.add_alias('TestAccount2', 'Alias', 'Contains')
+        actual = self.db.get('*', 'Alias')[0][:-2]
+        expected = (1, 2, 'Alias', 'Contains')
+        self.assertEqual(expected, actual)
+
     def test_add_attribute(self):
         self.db.add_attribute('TestAttribute')
         actual = self.db.get('*', 'Attribute')[0][:-1]
