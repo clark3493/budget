@@ -9,12 +9,16 @@ class BudgetDatabase(Database):
 
     def add_account(self,
                     name,
-                    account_type,
                     start_balance,
+                    start_date,
                     disconnect='default'):
         try:
-            columns = ('ID', 'Name', 'Type', 'StartBalance', 'Created')
-            values = (None, name, account_type, round(float(start_balance), 2), datetime.now())
+            columns = ('ID', 'Name',
+                       'StartBalance', 'StartDate', 'Created')
+            values = (None, name,
+                      round(float(start_balance), 2),
+                      start_date,
+                      datetime.now())
 
             self.insert('Account', columns, values)
             self.handle_connection(disconnect)

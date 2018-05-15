@@ -7,8 +7,8 @@ table_account = Table(
     'Account',
     fields=[Field('ID', 'INTEGER', constraints=['PRIMARY KEY', 'NOT NULL']),
             Field('Name', 'TEXT', 'NOT NULL'),
-            Field('Type', 'TEXT'),
             Field('StartBalance', 'REAL', 'NOT NULL'),
+            Field('StartDate', 'DATE', 'NOT NULL'),
             Field('Created', 'TIMESTAMP')]
 )
 

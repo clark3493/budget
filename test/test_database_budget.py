@@ -28,15 +28,15 @@ class BudgetDatabaseTestCase(unittest.TestCase):
         self.db.add_category("External")
 
     def test_add_account(self):
-        self.db.add_account("TestAccount", "Personal", 0.)
+        self.db.add_account("TestAccount", 0., '10/23/2016')
         self.db.sql_cmd("SELECT * FROM Account")
         actual = self.db._cursor.fetchall()
-        expected = (1, 'TestAccount', "Personal", 0.)
+        expected = (1, 'TestAccount', 0., '10/23/2016')
         self.assertEqual(expected, actual[0][:-1])
 
     def test_add_account_attribute(self):
-        self.db.add_account("TestAccount", "Personal", 0.)
-        self.db.add_account("TestAccount2", "Personal", 0.)
+        self.db.add_account("TestAccount", 0., '10/23/2016')
+        self.db.add_account("TestAccount2", 0., '10/23/2016')
         self.db.add_attribute('TestAttribute')
         self.db.add_account_attribute('TestAccount2', 'TestAttribute')
         actual = self.db.get('*', 'AccountAttribute')[0]
@@ -44,8 +44,8 @@ class BudgetDatabaseTestCase(unittest.TestCase):
         self.assertEqual(expected, actual)
 
     def test_add_alias(self):
-        self.db.add_account("TestAccount", "Personal", 0.)
-        self.db.add_account("TestAccount2", "Personal", 0.)
+        self.db.add_account("TestAccount", 0., '10/23/2016')
+        self.db.add_account("TestAccount2", 0., '10/23/2016')
         self.db.add_alias('TestAccount2', 'Alias', 'Contains')
         actual = self.db.get('*', 'Alias')[0][:-2]
         expected = (1, 2, 'Alias', 'Contains')
@@ -64,14 +64,14 @@ class BudgetDatabaseTestCase(unittest.TestCase):
         self.assertEqual(expected, actual)
 
     def test_add_expense(self):
-        self.db.add_account("TestAccount", "Personal", 0.)
+        self.db.add_account("TestAccount", 0., '10/23/2016')
         self.db.add_expense(-25., "TestAccount")
         actual = self.db.get('*', 'Transactions')[0][:-2]
         expected = (1, -25., 1, None, 'Expense', None, None, None, None, None)
         self.assertEqual(expected, actual)
 
     def test_add_income(self):
-        self.db.add_account("TestAccount", "Personal", 0.)
+        self.db.add_account("TestAccount", 0., '10/23/2016')
         self.db.add_income(25., "TestAccount")
         actual = self.db.get('*', 'Transactions')[0][:-2]
         expected = (1, 25., None, 1, 'Income', None, None, None, None, None)
@@ -85,14 +85,14 @@ class BudgetDatabaseTestCase(unittest.TestCase):
         self.assertEqual(expected, actual)
 
     def test_add_transaction(self):
-        self.db.add_account('TestAccount', 'Personal', 0.)
+        self.db.add_account('TestAccount', 0., '10/23/2016')
         self.db.add_transaction(-25., 'TestAccount', transaction_type='Expense')
         actual = self.db.get('*', 'Transactions')[0][:-2]
         expected = (1, -25., 1, None, 'Expense', None, None, None, None, None)
         self.assertEqual(expected, actual)
 
     def test_add_transaction_category(self):
-        self.db.add_account('TestAccount', 'Personal', 0.)
+        self.db.add_account('TestAccount', 0., '10/23/2016')
         self.db.add_transaction(-25., 'TestAccount', transaction_type='Expense')
         self.db.add_category("TestCategory")
         transaction_id = self.db.get_last_entry('Transactions')[0]
@@ -102,7 +102,7 @@ class BudgetDatabaseTestCase(unittest.TestCase):
         self.assertEqual(expected, actual)
 
     def test_add_transaction_subcategory(self):
-        self.db.add_account('TestAccount', 'Personal', 0.)
+        self.db.add_account('TestAccount', 0., '10/23/2016')
         self.db.add_transaction(-25., 'TestAccount', transaction_type='Expense')
         self.db.add_category("TestCategory")
         self.db.add_subcategory("TestSubCategory", "TestCategory")
