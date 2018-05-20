@@ -25,12 +25,12 @@ table_account_attribute = Table(
 table_alias = Table(
     'Alias',
     fields=[Field('ID', 'INTEGER', constraints=['PRIMARY KEY', 'NOT NULL']),
-            Field('Account', 'INTEGER', 'NOT NULL'),
+            Field('AccountID', 'INTEGER', 'NOT NULL'),
             Field('String', 'TEXT', 'NOT NULL'),
             Field('Type', 'TEXT'),
             Field('Created', 'TIMESTAMP', 'NOT NULL'),
             Field('Modified', 'TIMESTAMP')],
-    constraints=TableConstraint('FOREIGN KEY', 'Account', 'Account(ID)')
+    constraints=TableConstraint('FOREIGN KEY', 'AccountID', 'Account(ID)')
 )
 
 # ATTRIBUTE TABLE
@@ -54,9 +54,9 @@ table_subcategory = Table(
     'SubCategory',
     fields=[Field('ID', 'INTEGER', constraints=['PRIMARY KEY', 'NOT NULL']),
             Field('Name', 'TEXT', 'NOT NULL'),
-            Field('Parent', 'INTEGER', 'NOT NULL'),
+            Field('ParentID', 'INTEGER', 'NOT NULL'),
             Field('Created', 'TIMESTAMP', 'NOT NULL')],
-    constraints=TableConstraint('FOREIGN KEY', 'Parent', 'Category(ID)')
+    constraints=TableConstraint('FOREIGN KEY', 'ParentID', 'Category(ID)')
 )
 
 # TRANSACTION TABLE
@@ -64,22 +64,16 @@ table_transaction = Table(
     'Transactions',
     fields=[Field('ID', 'INTEGER', constraints=['PRIMARY KEY', 'NOT NULL']),
             Field('Value', 'REAL', 'NOT NULL'),
-            Field('FromAccount', 'INTEGER'),
-            Field('ToAccount', 'INTEGER'),
+            Field('FromAccountID', 'INTEGER'),
+            Field('ToAccountID', 'INTEGER'),
             Field('TransactionType', 'TEXT'),
             Field('Date', 'DATE'),
             Field('Description', 'TEXT'),
-            Field('Category', 'INTEGER'),
-            Field('SubCategory', 'INTEGER'),
             Field('PaymentType', 'TEXT'),
             Field('Created', 'TIMESTAMP', 'NOT NULL'),
             Field('Modified', 'TIMESTAMP')],
-    constraints=[TableConstraint('FOREIGN KEY', 'FromAccount', 'Account(ID)'),
-                 TableConstraint('FOREIGN KEY', 'ToAccount', 'Account(ID)'),
-                 TableConstraint('FOREIGN KEY', 'Category', 'Category(ID)'),
-                 TableConstraint('FOREIGN KEY', 'SubCategory', 'SubCategory(ID)'),
-                 TableConstraint('CHECK', 'NOT(FromAccount IS NULL AND ToAccount IS NULL)'),
-                 TableConstraint('CHECK', 'NOT(Category IS NULL AND SubCategory IS NOT NULL)')]
+    constraints=[TableConstraint('FOREIGN KEY', 'FromAccountID', 'Account(ID)'),
+                 TableConstraint('FOREIGN KEY', 'ToAccountID', 'Account(ID)')]
 )
 
 # TRANSACTION - CATEGORY INTERMEDIATE TABLE

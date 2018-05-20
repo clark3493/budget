@@ -73,7 +73,7 @@ class BudgetDatabase(Database):
             if account_id is None:
                 raise ValueError("Could not find account '{}' in database".format(account))
 
-            columns = ('ID', 'Account', 'String', 'Type', 'Created')
+            columns = ('ID', 'AccountID', 'String', 'Type', 'Created')
             values  = (None, account_id, string, alias_type, datetime.now())
 
             self.insert('Alias', columns, values)
@@ -195,7 +195,7 @@ class BudgetDatabase(Database):
                 msg += "Parent category {} could not be found".format(parent_category)
                 raise ValueError(msg)
 
-            columns = ('ID', 'Name', 'Parent', 'Created')
+            columns = ('ID', 'Name', 'ParentID', 'Created')
             values = (None, name, parent_id, datetime.now())
 
             self.insert('SubCategory', columns, values)
@@ -232,7 +232,7 @@ class BudgetDatabase(Database):
                 if from_account_id is None:
                     raise ValueError("Account '{}' could not be found in the database".format(from_account))
                 else:
-                    columns += ('FromAccount',)
+                    columns += ('FromAccountID',)
                     values  += (from_account_id,)
 
             if to_account is not None:
@@ -240,7 +240,7 @@ class BudgetDatabase(Database):
                 if to_account_id is None:
                     raise ValueError("Account '{}' could not be found in the database".format(to_account))
                 else:
-                    columns += ('ToAccount',)
+                    columns += ('ToAccountID',)
                     values  += (to_account_id,)
 
             if transaction_type is not None:
@@ -255,14 +255,6 @@ class BudgetDatabase(Database):
                 columns += ('Description',)
                 values  += (description,)
 
-            if category is not None:
-                columns += ('Category',)
-                values  += (category,)
-
-            if subcategory is not None:
-                columns += ('SubCategory',)
-                values  += (subcategory,)
-
             if payment_type is not None:
                 columns += ('PaymentType',)
                 values  += (payment_type,)
@@ -271,7 +263,6 @@ class BudgetDatabase(Database):
             values  += (datetime.now(),)
 
             self.insert('Transactions', columns, values)
-            #self.update_account_balance(value, from_account, to_account)
             self.handle_connection(disconnect)
 
         except Exception as e:

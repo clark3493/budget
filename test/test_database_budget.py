@@ -67,14 +67,14 @@ class BudgetDatabaseTestCase(unittest.TestCase):
         self.db.add_account("TestAccount", 0., '10/23/2016')
         self.db.add_expense(-25., "TestAccount")
         actual = self.db.get('*', 'Transactions')[0][:-2]
-        expected = (1, -25., 1, None, 'Expense', None, None, None, None, None)
+        expected = (1, -25., 1, None, 'Expense', None, None, None)
         self.assertEqual(expected, actual)
 
     def test_add_income(self):
         self.db.add_account("TestAccount", 0., '10/23/2016')
         self.db.add_income(25., "TestAccount")
         actual = self.db.get('*', 'Transactions')[0][:-2]
-        expected = (1, 25., None, 1, 'Income', None, None, None, None, None)
+        expected = (1, 25., None, 1, 'Income', None, None, None)
         self.assertEqual(expected, actual)
 
     def test_add_subcategory(self):
@@ -88,7 +88,7 @@ class BudgetDatabaseTestCase(unittest.TestCase):
         self.db.add_account('TestAccount', 0., '10/23/2016')
         self.db.add_transaction(-25., 'TestAccount', transaction_type='Expense')
         actual = self.db.get('*', 'Transactions')[0][:-2]
-        expected = (1, -25., 1, None, 'Expense', None, None, None, None, None)
+        expected = (1, -25., 1, None, 'Expense', None, None, None)
         self.assertEqual(expected, actual)
 
     def test_add_transaction_category(self):
