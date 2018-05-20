@@ -1,11 +1,16 @@
 import pathmagic
-from database import Database
+import logging
 from datetime import datetime
+
+from database import Database
+from string_filter import StringFilter as Filt
 
 
 class BudgetDatabase(Database):
     def __init__(self, configuration):
         super(BudgetDatabase, self).__init__(configuration)
+        self.logger = logging.getLogger(__name__)
+        logging.basicConfig(level=configuration.LOGLEVEL)
 
     def add_account(self,
                     name,

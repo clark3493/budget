@@ -18,6 +18,8 @@ class Database(Config):
         
         # database attributes
         self.AUTO_DISCONNECT = True
+        if self.DEBUG:
+            sqlite3.enable_callback_tracebacks(True)
         
         # database connections
         self._connection = None
@@ -285,7 +287,7 @@ class Database(Config):
         if self.AUTO_DISCONNECT:
             self.disconnect()
             
-    def sql_cmd(self, command, commit=False,disconnect='default'):
+    def sql_cmd(self, command, commit=False, disconnect='default'):
         """
         Executes a general SQL command in the database
         

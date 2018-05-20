@@ -1,5 +1,6 @@
 import pathmagic
 import csv
+import logging
 from datetime import datetime
 from parser_statement import Parser
 
@@ -11,6 +12,8 @@ class BofAParser(Parser):
     def __init__(self, filepath):
         super(BofAParser, self).__init__(filepath)
         self.transactions = []
+
+        self.logger = logging.getLogger(__name__)
 
     def parse_statement(self):
         start = False
@@ -62,7 +65,7 @@ class BofAParser(Parser):
         except Exception as e:
             # ADD BETTER ERROR HANDLING
             self.logger.error(e)
-            print("line = " + str(line))
+            self.logger.debug("line = " + str(line))
             return None
 
 
