@@ -64,17 +64,33 @@ class BudgetDatabase(Database):
                     account, attribute, self.DATABASE_DIR + "\\" + self.DATABASE_URI, e))
 
     def add_alias(self,
-                  account,
                   string,
                   alias_type,
+                  subcategory=None,
+                  merchant=None,
                   disconnect='default'):
         try:
-            account_id = self.get_id('Account', 'Name', account)
-            if account_id is None:
-                raise ValueError("Could not find account '{}' in database".format(account))
+            columns = ('ID', 'String', 'Type')
+            values  = (None, string, alias_type)
 
-            columns = ('ID', 'AccountID', 'String', 'Type', 'Created')
-            values  = (None, account_id, string, alias_type, datetime.now())
+            if subcategory is not None:
+                subcategory_id = self.get_id('SubCategory', 'Name', subcategory)
+                if subcategory_id is None:
+                    raise ValueError("Could not find account '{}' in database".format(subcategory))
+
+                columns += ('SubCategoryID',)
+                values  += (subcategory_id,)
+
+            if merchant is not None:
+                merchant_id = self.get_id('Merchant', 'Name', merchant)
+                if merchant_id is None:
+                    raise ValueError("Could not find merchant '{}' in database".format(merchant))
+
+                columns += ('MerchantID',)
+                values  += (merchant_id,)
+
+            columns += ('Created',)
+            values  += (datetime.now(),)
 
             self.insert('Alias', columns, values)
             self.handle_connection(disconnect)
@@ -181,6 +197,22 @@ class BudgetDatabase(Database):
             else:
                 self.logger.error("Error attempting to add {} income to {} in {}:\n{}".format(
                     value, account, self.DATABASE_DIR + "\\" + self.DATABASE_URI, e))
+
+    def add_merchant(self, name, disconnect='default'):
+        try:
+            columns = ('ID', 'Name', 'Created')
+            values  = (None, name, datetime.now())
+
+            self.insert('Merchant', columns, values)
+            self.handle_connection(disconnect)
+
+        except Exception as e:
+            if self.DEBUG is True:
+                self.disconnect()
+                raise
+            else:
+                self.logger.error("Error attempting to add {} merchant in {}:\n{}".format(
+                    name, self.DATABASE_DIR + "\\" + self.DATABASE_URI, e))
 
     def add_subcategory(self,
                         name,

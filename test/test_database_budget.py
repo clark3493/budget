@@ -1,5 +1,6 @@
 import pathmagic  # noqa
 import os
+import sqlite3
 import unittest
 from baseline import baseline_tables
 from config import TestConfig
@@ -43,13 +44,23 @@ class BudgetDatabaseTestCase(unittest.TestCase):
         expected = (2, 1)
         self.assertEqual(expected, actual)
 
-    def test_add_alias(self):
-        self.db.add_account("TestAccount", 0., '10/23/2016')
-        self.db.add_account("TestAccount2", 0., '10/23/2016')
-        self.db.add_alias('TestAccount2', 'Alias', 'Contains')
+    def test_add_alias_for_subcategory(self):
+        self.db.add_category('TestCategory')
+        self.db.add_subcategory('TestSubCategory', 'TestCategory')
+        self.db.add_alias('AliasString', 'CONTAINS', 'TestSubCategory')
         actual = self.db.get('*', 'Alias')[0][:-2]
-        expected = (1, 2, 'Alias', 'Contains')
+        expected = (1, 1, None, 'AliasString', 'CONTAINS')
         self.assertEqual(expected, actual)
+
+    def test_add_alias_for_merchant(self):
+        self.db.add_merchant('TestMerchant')
+        self.db.add_alias('AliasString', 'CONTAINS', None, 'TestMerchant')
+        actual = self.db.get('*', 'Alias')[0][:-2]
+        expected = (1, None, 1, 'AliasString', 'CONTAINS')
+        self.assertEqual(expected, actual)
+
+    def test_add_alias_with_no_subcategory_or_merchant_raises_sqlite_error(self):
+        self.assertRaises(sqlite3.IntegrityError, self.db.add_alias, 'AliasString', 'CONTAINS')
 
     def test_add_attribute(self):
         self.db.add_attribute('TestAttribute')
@@ -75,6 +86,12 @@ class BudgetDatabaseTestCase(unittest.TestCase):
         self.db.add_income(25., "TestAccount")
         actual = self.db.get('*', 'Transactions')[0][:-2]
         expected = (1, 25., None, 1, 'Income', None, None, None)
+        self.assertEqual(expected, actual)
+
+    def test_add_merchant(self):
+        self.db.add_merchant('Employer')
+        actual = self.db.get('*', 'Merchant')[0][:-1]
+        expected = (1, 'Employer')
         self.assertEqual(expected, actual)
 
     def test_add_subcategory(self):
@@ -119,6 +136,7 @@ class BudgetDatabaseTestCase(unittest.TestCase):
                     ('Alias',),
                     ('Attribute',),
                     ('Category',),
+                    ('Merchant',),
                     ('SubCategory',),
                     ('Transactions',),
                     ('TransactionCategory',),

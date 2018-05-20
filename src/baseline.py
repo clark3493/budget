@@ -25,12 +25,15 @@ table_account_attribute = Table(
 table_alias = Table(
     'Alias',
     fields=[Field('ID', 'INTEGER', constraints=['PRIMARY KEY', 'NOT NULL']),
-            Field('AccountID', 'INTEGER', 'NOT NULL'),
+            Field('SubCategoryID', 'INTEGER'),
+            Field('MerchantID', 'INTEGER'),
             Field('String', 'TEXT', 'NOT NULL'),
-            Field('Type', 'TEXT'),
+            Field('Type', 'TEXT', 'NOT NULL'),
             Field('Created', 'TIMESTAMP', 'NOT NULL'),
             Field('Modified', 'TIMESTAMP')],
-    constraints=TableConstraint('FOREIGN KEY', 'AccountID', 'Account(ID)')
+    constraints=[TableConstraint('FOREIGN KEY', 'SubCategoryID', 'SubCategory(ID)'),
+                 TableConstraint('FOREIGN KEY', 'MerchantID', 'Merchant(ID)'),
+                 TableConstraint('CHECK', 'NOT(SubCategoryID IS NULL AND MerchantID IS NULL)')]
 )
 
 # ATTRIBUTE TABLE
@@ -44,6 +47,14 @@ table_attribute = Table(
 # CATEGORY TABLE
 table_category = Table(
     'Category',
+    fields=[Field('ID', 'INTEGER', constraints=['PRIMARY KEY', 'NOT NULL']),
+            Field('Name', 'TEXT', constraints=['NOT NULL', 'UNIQUE']),
+            Field('Created', 'TIMESTAMP', 'NOT NULL')]
+)
+
+# MERCHANT TABLE
+table_merchant = Table(
+    'Merchant',
     fields=[Field('ID', 'INTEGER', constraints=['PRIMARY KEY', 'NOT NULL']),
             Field('Name', 'TEXT', constraints=['NOT NULL', 'UNIQUE']),
             Field('Created', 'TIMESTAMP', 'NOT NULL')]
@@ -101,6 +112,7 @@ def baseline_tables():
             table_alias,
             table_attribute,
             table_category,
+            table_merchant,
             table_subcategory,
             table_transaction,
             table_transaction_category,
