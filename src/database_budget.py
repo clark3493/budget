@@ -66,7 +66,7 @@ class BudgetDatabase(Database):
     def add_alias(self,
                   string,
                   alias_type,
-                  subcategory=None,
+                  category=None,
                   merchant=None,
                   disconnect='default'):
         # TODO: add ability to set transaction value limits for application of alias
@@ -75,13 +75,13 @@ class BudgetDatabase(Database):
             columns = ('ID', 'String', 'Type')
             values  = (None, string, alias_type)
 
-            if subcategory is not None:
-                subcategory_id = self.get_id('SubCategory', 'Name', subcategory)
-                if subcategory_id is None:
-                    raise ValueError("Could not find account '{}' in database".format(subcategory))
+            if category is not None:
+                category_id = self.get_id('Category', 'Name', category)
+                if category_id is None:
+                    raise ValueError("Could not find category '{}' in database".format(category))
 
-                columns += ('SubCategoryID',)
-                values  += (subcategory_id,)
+                columns += ('CategoryID',)
+                values  += (category_id,)
 
             if merchant is not None:
                 merchant_id = self.get_id('Merchant', 'Name', merchant)
@@ -102,8 +102,8 @@ class BudgetDatabase(Database):
                 self.disconnect()
                 raise
             else:
-                self.logger.error("Error attempting to add alias '{}' for '{}' in {}:\n{}".format(
-                    string, account, self.DATABASE_DIR + "\\" + self.DATABASE_URI, e))
+                self.logger.error("Error attempting to add alias {} '{}' in {}:\n{}".format(
+                    alias_type, string, self.DATABASE_DIR + "\\" + self.DATABASE_URI, e))
 
     def add_attribute(self,
                       attribute_name,
@@ -123,10 +123,24 @@ class BudgetDatabase(Database):
                 self.logger.error("Error attempting to add attribute {} to {}:\n{}".format(
                     attribute_name, self.DATABASE_DIR + "\\" + self.DATABASE_URI, e))
 
-    def add_category(self, name, disconnect='default'):
+    def add_category(self,
+                     name,
+                     parent=None,
+                     disconnect='default'):
         try:
-            columns = ('ID', 'Name', 'Created')
-            values= (None, name, datetime.now())
+            columns = ('ID', 'Name')
+            values= (None, name)
+
+            if parent is not None:
+                parent_id = self.get_id('Category', 'Name', parent)
+                if parent_id is None:
+                    raise ValueError("Could not find category '{}' in database".format(parent))
+
+                columns += ('ParentID',)
+                values  += (parent_id,)
+
+            columns += ('Created',)
+            values  += (datetime.now(),)
 
             self.insert('Category', columns, values)
             self.handle_connection(disconnect)

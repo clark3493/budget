@@ -44,12 +44,12 @@ class BudgetDatabaseTestCase(unittest.TestCase):
         expected = (2, 1)
         self.assertEqual(expected, actual)
 
-    def test_add_alias_for_subcategory(self):
+    def test_add_alias_for_category(self):
         self.db.add_category('TestCategory')
-        self.db.add_subcategory('TestSubCategory', 'TestCategory')
+        self.db.add_category('TestSubCategory', 'TestCategory')
         self.db.add_alias('AliasString', 'CONTAINS', 'TestSubCategory')
         actual = self.db.get('*', 'Alias')[0][:-2]
-        expected = (1, 1, None, 'AliasString', 'CONTAINS')
+        expected = (1, 2, None, 'AliasString', 'CONTAINS')
         self.assertEqual(expected, actual)
 
     def test_add_alias_for_merchant(self):
@@ -71,7 +71,7 @@ class BudgetDatabaseTestCase(unittest.TestCase):
     def test_add_category(self):
         self.db.add_category("TestCategory")
         actual = self.db.get('*', 'Category')[0][:-1]
-        expected = (1, 'TestCategory')
+        expected = (1, 'TestCategory', None)
         self.assertEqual(expected, actual)
 
     def test_add_expense(self):
@@ -96,9 +96,9 @@ class BudgetDatabaseTestCase(unittest.TestCase):
 
     def test_add_subcategory(self):
         self.db.add_category("TestCategory")
-        self.db.add_subcategory("TestSubCategory", "TestCategory")
-        actual = self.db.get('*', 'SubCategory')[0][:-1]
-        expected = (1, 'TestSubCategory', 1)
+        self.db.add_category("TestSubCategory", "TestCategory")
+        actual = self.db.get('*', 'Category', where="Name='TestSubCategory'")[0][:-1]
+        expected = (2, 'TestSubCategory', 1)
         self.assertEqual(expected, actual)
 
     def test_add_transaction(self):
@@ -118,17 +118,6 @@ class BudgetDatabaseTestCase(unittest.TestCase):
         expected = (1, 1)
         self.assertEqual(expected, actual)
 
-    def test_add_transaction_subcategory(self):
-        self.db.add_account('TestAccount', 0., '10/23/2016')
-        self.db.add_transaction(-25., 'TestAccount', transaction_type='Expense')
-        self.db.add_category("TestCategory")
-        self.db.add_subcategory("TestSubCategory", "TestCategory")
-        transaction_id = self.db.get_last_entry('Transactions')[0]
-        self.db.add_transaction_subcategory(transaction_id, 'TestSubCategory')
-        actual = self.db.get('*', 'TransactionSubCategory')[0]
-        expected = (1, 1)
-        self.assertEqual(expected, actual)
-
     def test_build_baseline_tables(self):
         tables = self.db.get('name', 'sqlite_master', "type='table'")
         expected = [('Account',),
@@ -137,10 +126,8 @@ class BudgetDatabaseTestCase(unittest.TestCase):
                     ('Attribute',),
                     ('Category',),
                     ('Merchant',),
-                    ('SubCategory',),
                     ('Transactions',),
-                    ('TransactionCategory',),
-                    ('TransactionSubCategory',)]
+                    ('TransactionCategory',)]
         self.assertEqual(expected, tables)
 
     def tearDown(self):

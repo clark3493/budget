@@ -25,15 +25,15 @@ table_account_attribute = Table(
 table_alias = Table(
     'Alias',
     fields=[Field('ID', 'INTEGER', constraints=['PRIMARY KEY', 'NOT NULL']),
-            Field('SubCategoryID', 'INTEGER'),
+            Field('CategoryID', 'INTEGER'),
             Field('MerchantID', 'INTEGER'),
             Field('String', 'TEXT', 'NOT NULL'),
             Field('Type', 'TEXT', 'NOT NULL'),
             Field('Created', 'TIMESTAMP', 'NOT NULL'),
             Field('Modified', 'TIMESTAMP')],
-    constraints=[TableConstraint('FOREIGN KEY', 'SubCategoryID', 'SubCategory(ID)'),
+    constraints=[TableConstraint('FOREIGN KEY', 'CategoryID', 'Category(ID)'),
                  TableConstraint('FOREIGN KEY', 'MerchantID', 'Merchant(ID)'),
-                 TableConstraint('CHECK', 'NOT(SubCategoryID IS NULL AND MerchantID IS NULL)')]
+                 TableConstraint('CHECK', 'NOT(CategoryID IS NULL AND MerchantID IS NULL)')]
 )
 
 # ATTRIBUTE TABLE
@@ -49,7 +49,9 @@ table_category = Table(
     'Category',
     fields=[Field('ID', 'INTEGER', constraints=['PRIMARY KEY', 'NOT NULL']),
             Field('Name', 'TEXT', constraints=['NOT NULL', 'UNIQUE']),
-            Field('Created', 'TIMESTAMP', 'NOT NULL')]
+            Field('ParentID', 'INTEGER'),
+            Field('Created', 'TIMESTAMP', 'NOT NULL')],
+    constraints=TableConstraint('FOREIGN KEY', 'ParentID', 'Category(ID)')
 )
 
 # MERCHANT TABLE
@@ -58,16 +60,6 @@ table_merchant = Table(
     fields=[Field('ID', 'INTEGER', constraints=['PRIMARY KEY', 'NOT NULL']),
             Field('Name', 'TEXT', constraints=['NOT NULL', 'UNIQUE']),
             Field('Created', 'TIMESTAMP', 'NOT NULL')]
-)
-
-# SUB CATEGORY TABLE
-table_subcategory = Table(
-    'SubCategory',
-    fields=[Field('ID', 'INTEGER', constraints=['PRIMARY KEY', 'NOT NULL']),
-            Field('Name', 'TEXT', 'NOT NULL'),
-            Field('ParentID', 'INTEGER', 'NOT NULL'),
-            Field('Created', 'TIMESTAMP', 'NOT NULL')],
-    constraints=TableConstraint('FOREIGN KEY', 'ParentID', 'Category(ID)')
 )
 
 # TRANSACTION TABLE
@@ -96,15 +88,6 @@ table_transaction_category = Table(
                  TableConstraint('FOREIGN KEY', 'CategoryID', 'Category(ID)')]
 )
 
-# TRANSACTION - SUBCATEGORY INTERMEDIATE TABLE
-table_transaction_subcategory = Table(
-    'TransactionSubCategory',
-    fields=[Field('TransactionID', 'INTEGER', 'NOT NULL'),
-            Field('SubCategoryID', 'INTEGER', 'NOT NULL')],
-    constraints=[TableConstraint('FOREIGN KEY', 'TransactionID', 'Transactions(ID)'),
-                 TableConstraint('FOREIGN KEY', 'SubCategoryID', 'SubCategory(ID)')]
-)
-
 
 def baseline_tables():
     return [table_account,
@@ -113,7 +96,5 @@ def baseline_tables():
             table_attribute,
             table_category,
             table_merchant,
-            table_subcategory,
             table_transaction,
-            table_transaction_category,
-            table_transaction_subcategory]
+            table_transaction_category]
