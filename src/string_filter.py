@@ -4,6 +4,12 @@ class StringFilter(str):
     A class for determining if strings meet various
     filtering criteria
     """
+
+    FILTERS = ('CONTAINS', 'ENDSWITH', 'EQUALS', 'STARTSWITH')
+    """
+    The types of filters currently supported by this class
+    """
+
     def __new__(cls, string, *args, **kwargs):
         return str.__new__(cls, string)
 

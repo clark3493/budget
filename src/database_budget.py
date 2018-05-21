@@ -69,6 +69,8 @@ class BudgetDatabase(Database):
                   subcategory=None,
                   merchant=None,
                   disconnect='default'):
+        # TODO: add ability to set transaction value limits for application of alias
+        #       ex: expenses < $15 at gas stations are for food/tobacco
         try:
             columns = ('ID', 'String', 'Type')
             values  = (None, string, alias_type)
@@ -143,8 +145,6 @@ class BudgetDatabase(Database):
                     paid_to=None,
                     expense_date=None,
                     description=None,
-                    category=None,
-                    subcategory=None,
                     payment_type=None,
                     disconnect='default'):
         
@@ -155,8 +155,6 @@ class BudgetDatabase(Database):
                                  transaction_type='Expense',
                                  transaction_date=expense_date,
                                  description=description,
-                                 category=category,
-                                 subcategory=subcategory,
                                  payment_type=payment_type,
                                  disconnect=disconnect)
             
@@ -174,8 +172,6 @@ class BudgetDatabase(Database):
                    source=None,
                    income_date=None,
                    description=None,
-                   category=None,
-                   subcategory=None,
                    payment_type=None,
                    disconnect='default'):
         try:
@@ -185,8 +181,6 @@ class BudgetDatabase(Database):
                                  transaction_type='Income',
                                  transaction_date=income_date,
                                  description=description,
-                                 category=category,
-                                 subcategory=subcategory,
                                  payment_type=payment_type,
                                  disconnect=disconnect)
 
@@ -248,8 +242,6 @@ class BudgetDatabase(Database):
                         transaction_type=None,
                         transaction_date=None,
                         description=None,
-                        category=None,
-                        subcategory=None,
                         payment_type=None,
                         disconnect='default'):
         try:
@@ -356,5 +348,7 @@ class BudgetDatabase(Database):
         self.handle_connection(disconnect)
 
         return act_id
+
+
 
 
