@@ -1,4 +1,6 @@
 import pathmagic  # noqa
+import contextlib
+import logging
 import os
 import sqlite3
 import unittest
@@ -119,7 +121,7 @@ class BudgetDatabaseTestCase(unittest.TestCase):
         self.assertEqual(expected, actual)
 
     def test_build_baseline_tables(self):
-        tables = self.db.get('name', 'sqlite_master', "type='table'")
+        tables = self.db.get('name', 'sqlite_master', where="type='table'")
         expected = [('Account',),
                     ('AccountAttribute',),
                     ('Alias',),
@@ -129,6 +131,74 @@ class BudgetDatabaseTestCase(unittest.TestCase):
                     ('Transactions',),
                     ('TransactionCategory',)]
         self.assertEqual(expected, tables)
+
+    def test_get_category_id_from_description(self):
+        self.db.add_category('TestCategory')
+        self.db.add_category('TestCategory2', 'TestCategory')
+        self.db.add_alias('SomeString', 'CONTAINS', category='TestCategory2')
+        actual = self.db.get_category_id_from_description('WordsSomeStringWords')
+        expected = 2
+        self.assertEqual(expected, actual)
+
+    def test_get_category_id_from_description_multiple_aliases_returns_id(self):
+        with contextlib.redirect_stdout(None):
+            self.db.add_category('TestCategory')
+            self.db.add_category('TestCategory2')
+            self.db.add_alias('SomeString', 'CONTAINS', category='TestCategory')
+            self.db.add_alias('SomeString2', 'CONTAINS', category='TestCategory2')
+            actual = self.db.get_category_id_from_description('WordsSomeString2Words')
+            expected = 1
+            self.assertEqual(expected, actual)
+
+    def test_get_category_id_from_description_multiple_categories_logs_warning(self):
+        with contextlib.redirect_stdout(None):
+            self.db.add_category('TestCategory')
+            self.db.add_category('TestCategory2')
+            self.db.add_alias('SomeString', 'CONTAINS', category='TestCategory')
+            self.db.add_alias('SomeString2', 'CONTAINS', category='TestCategory2')
+            self.db.get_category_id_from_description('WordsSomeString2Words')
+            self.assertLogs(self.db.logger, logging.WARNING)
+
+    def test_get_category_id_from_description_none_logs_info(self):
+        self.db.get_category_id_from_description('SomeString')
+        self.assertLogs(self.db.logger, logging.INFO)
+
+    def test_get_category_id_from_description_none_returns_none(self):
+        actual = self.db.get_category_id_from_description('SomeString')
+        expected = None
+        self.assertEqual(expected, actual)
+
+    def test_get_merchant_id_from_description_contains(self):
+        self.db.add_merchant('TestMerchant')
+        self.db.add_merchant('TestMerchant2')
+        self.db.add_alias('SomeString', 'CONTAINS', merchant='TestMerchant2')
+        actual = self.db.get_merchant_id_from_description('WordsSomeStringWords')
+        expected = 2
+        self.assertEqual(expected, actual)
+
+    def test_get_merchant_id_from_description_endswith(self):
+        self.db.add_merchant('TestMerchant')
+        self.db.add_merchant('TestMerchant2')
+        self.db.add_alias('SomeString', 'ENDSWITH', merchant='TestMerchant2')
+        actual = self.db.get_merchant_id_from_description('WordsSomeString')
+        expected = 2
+        self.assertEqual(expected, actual)
+
+    def test_get_merchant_id_from_description_equals(self):
+        self.db.add_merchant('TestMerchant')
+        self.db.add_merchant('TestMerchant2')
+        self.db.add_alias('SomeString', 'EQUALS', merchant='TestMerchant2')
+        actual = self.db.get_merchant_id_from_description('SomeString')
+        expected = 2
+        self.assertEqual(expected, actual)
+
+    def test_get_merchant_id_from_description_startswith(self):
+        self.db.add_merchant('TestMerchant')
+        self.db.add_merchant('TestMerchant2')
+        self.db.add_alias('SomeString', 'STARTSWITH', merchant='TestMerchant2')
+        actual = self.db.get_merchant_id_from_description('SomeStringWords')
+        expected = 2
+        self.assertEqual(expected, actual)
 
     def tearDown(self):
         """

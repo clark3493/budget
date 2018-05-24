@@ -135,8 +135,25 @@ class Database(Config):
         if self.AUTO_DISCONNECT:
             self.disconnect()
 
-    def get(self, fields, table, where=None, disconnect='default'):
+    def get(self,
+            fields,
+            table,
+            inner_join=None,
+            where=None,
+            disconnect='default'):
+
         cmd = "SELECT " + fields + " FROM " + table
+
+        if inner_join is not None:
+            if type(inner_join) is str:
+                cmd += " INNER JOIN " + inner_join
+            elif type(inner_join) is list:
+                for ij in inner_join:
+                    cmd += " INNER JOIN " + ij
+            else:
+                ## ADD BETTER ERROR HANDLING
+                self.logger.warning("INNER JOIN input type not recognized. INNER JOIN statement ignored")
+
         if where is not None:
             cmd += " WHERE " + where
         self.sql_cmd(cmd, disconnect=False)
@@ -240,8 +257,7 @@ class Database(Config):
         @type vals: tuple(various)
         """
         try:
-            valstr = "?," * len(cols)
-            valstr = valstr[:-1]
+            valstr = "?" + ",?" * (len(cols)-1)
             cursor = self.get_cursor()
             cmd = "INSERT INTO {} {} VALUES ({})".format(
                 table, cols, valstr)

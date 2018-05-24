@@ -355,13 +355,86 @@ class BudgetDatabase(Database):
                 raise
             else:
                 self.logger.error("Error attempting to link subcategory '{}' to transaction '{}' in {}:\n{}".format(
-                    subcategory, transaction_id, self.DATABASE_DIR + "\\" + self.DATABASE_URI, e))
+                    subcategory, transaction_id, self.DB_DIR + "\\" + self.DATABASE_URI, e))
+
+    @staticmethod
+    def alias_where_filter(string):
+        msg  = "(Alias.Type='CONTAINS' AND '{}' LIKE '%' || Alias.String || '%')"
+        msg += " OR (Alias.Type='STARTSWITH' AND '{}' LIKE Alias.String || '%')"
+        msg += " OR (Alias.Type='ENDSWITH' AND '{}' LIKE '%' || Alias.String)"
+        msg += " OR (Alias.Type='EQUALS' AND '{}' LIKE Alias.String)"
+        return msg.format(string, string, string, string)
 
     def get_account_id(self, account, disconnect=False):
         act_id = self.get_id('Account', 'Name', account)
         self.handle_connection(disconnect)
 
         return act_id
+
+    def get_category_id_from_description(self,
+                                         description,
+                                         disconnect=False):
+        try:
+            id_ = self.get(fields='Category.ID',
+                           table='Category',
+                           inner_join='Alias ON Alias.CategoryID=Category.ID',
+                           where=self.alias_where_filter(description)
+                           )
+            if not id_:
+                self.logger.info("No matching alias found for description '{}'".format(description))
+                ret = None
+            elif len(id_) > 1:
+                msg = "\nMore than 1 matching alias was found for description:\n"
+                msg += "'{}'\n"
+                msg += "Only the first category ID was returned."
+                self.logger.warning(msg.format(description))
+                ret = id_[0][0]
+            else:
+                ret = id_[0][0]
+
+            self.handle_connection(disconnect)
+            return ret
+
+        except Exception as e:
+            if self.DEBUG is True:
+                self.disconnect()
+                raise
+            else:
+                self.logger.error("Error attempting to get category ID for description '{}' in database '{}:\n{}'".format(
+                    description, self.DB_DIR + '\\' + self.DATABASE_URI, e))
+
+    def get_merchant_id_from_description(self,
+                                         description,
+                                         disconnect=False):
+        try:
+            id_ = self.get(fields='Merchant.ID',
+                           table='Merchant',
+                           inner_join='Alias ON Alias.MerchantID=Merchant.ID',
+                           where=self.alias_where_filter(description)
+                           )
+            if not id_:
+                self.logger.info("No matching alias found for description '{}'".format(description))
+                ret = None
+            elif len(id_) > 1:
+                msg = "\nMore than 1 matching alias was found for description:\n"
+                msg += "'{}'\n"
+                msg += "Only the first merchant ID was returned."
+                self.logger.warning(msg.format(description))
+                ret = id_[0][0]
+            else:
+                ret = id_[0][0]
+
+            self.handle_connection(disconnect)
+            return ret
+
+        except Exception as e:
+            if self.DEBUG is True:
+                self.disconnect()
+                raise
+            else:
+                self.logger.error("Error attempting to get merchant ID for description '{}' in database '{}:\n{}'".format(
+                    description, self.DB_DIR + '\\' + self.DATABASE_URI, e))
+
 
 
 

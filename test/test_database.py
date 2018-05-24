@@ -54,13 +54,32 @@ class DatabaseTestCase(unittest.TestCase):
         self.db.disconnect()
         self.assertIsNone(self.db._connection)
 
-    def test_get(self):
+    def test_get_with_where(self):
         """
         Verify that get() function works
         """
         populate_sample_database(self.db)
-        val = self.db.get("title", "ALBUMS", "artist='Andy Hunter'")
+        val = self.db.get("title", "ALBUMS", where="artist='Andy Hunter'")
         self.assertEqual([('Glow',),('Exodus',)], val)
+
+    def test_get_with_inner_join(self):
+        populate_complex_database(self.db)
+        actual = self.db.get(
+            fields="stringB",
+            table="tableA",
+            inner_join="tableB ON tableA.ID=tableB.IDA",
+            where="tableA.stringA='two'"
+            )
+        expected = [('3',)]
+        self.assertEqual(expected, actual)
+        actual2 = self.db.get(
+            fields="stringB",
+            table="tableA",
+            inner_join="tableB ON tableA.ID=tableB.IDA",
+            where="tableA.stringA='one'"
+            )
+        expected2 = [('1',), ('2',)]
+        self.assertEqual(expected, actual)
 
     def test_getone(self):
         populate_sample_database(self.db)
@@ -107,7 +126,7 @@ class DatabaseTestCase(unittest.TestCase):
         columns = ('title', 'artist', 'release_date')
         values = ('TITLE', 'ARTIST', '2018')
         self.db.insert('albums', columns, values)
-        actual = self.db.get('*', 'albums', "title='TITLE'")[0][:4]
+        actual = self.db.get('*', 'albums', where="title='TITLE'")[0][:4]
         expected = (6, 'TITLE', 'ARTIST', '2018')
         self.assertEqual(expected, actual)
 
@@ -147,4 +166,30 @@ def populate_sample_database(db):
                'Reach Records', 'CD')]
     cursor.executemany("INSERT INTO albums VALUES (?,?,?,?,?,?)",
                        albums)
+    db.commit()
+
+
+def populate_complex_database(db):
+    cursor = db.get_cursor()
+
+    # create first table
+    cursor.execute("""CREATE TABLE tableA
+                      (ID integer primary key,
+                       stringA text)
+                   """)
+
+    # create linked table
+    cursor.execute("""CREATE TABLE tableB
+                      (ID integer primary key,
+                       stringB text,
+                       IDA integer,
+                       FOREIGN KEY (IDA) REFERENCES tableA(ID))
+                       """)
+
+    # insert some data
+    adata = [(None, "one"), (None, "two"), (None, "three")]
+    cursor.executemany("INSERT INTO tableA VALUES (?,?)", adata)
+    bdata = [(None, "1", 1), (None, "2", 1), (None, "3", 2)]
+    cursor.executemany("INSERT INTO tableB VALUES (?,?,?)", bdata)
+
     db.commit()
