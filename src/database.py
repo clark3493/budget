@@ -263,7 +263,7 @@ class Database(Config):
                 table, cols, valstr)
             cursor.execute(cmd, vals)
             self.commit()
-        except sqlite3.OperationalError:
+        except (sqlite3.OperationalError, sqlite3.IntegrityError):
             self.disconnect()
             self.logger.error("\nCommand='{}'\nValues={}".format(cmd, vals))
             raise

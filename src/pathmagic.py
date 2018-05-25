@@ -2,6 +2,9 @@ import os
 import sys
 
 src_dir = os.path.dirname(os.path.abspath(__file__))
-package_dir = os.path.dirname(src_dir)
-sys.path.insert(0, r'C:\Projects\_budget')
-sys.path.insert(0, os.path.join(package_dir, 'src'))
+cfg_dir = r'C:\Projects\_budget'
+
+if src_dir not in sys.path:
+    sys.path.insert(0, src_dir)
+if cfg_dir not in sys.path:
+    sys.path.append(cfg_dir)

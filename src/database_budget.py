@@ -434,8 +434,3 @@ class BudgetDatabase(Database):
             else:
                 self.logger.error("Error attempting to get merchant ID for description '{}' in database '{}:\n{}'".format(
                     description, self.DB_DIR + '\\' + self.DATABASE_URI, e))
-
-
-
-
-
